@@ -1,0 +1,25 @@
+{
+  "task_id": "smoke-fix-add",
+  "attempts": [
+    {
+      "attempt_id": "att-cce362db",
+      "agent_id": "dbg-fake-prior",
+      "approach": "Replace the body of add() with `return a * b` in add.py.",
+      "hypothesis": "Maybe the function is supposed to multiply.",
+      "status": "failed",
+      "result_detail": "Tests still fail — multiplication is wrong too.",
+      "started_at": "2026-05-07T22:53:23.205933+00:00",
+      "ended_at": "2026-05-07T22:53:23.206672+00:00"
+    },
+    {
+      "attempt_id": "att-c141a7a5",
+      "agent_id": "dbg-smoke-mem-1",
+      "approach": "In add.py line 2, change `return a - b` to `return a + b` so add() actually performs addition.",
+      "hypothesis": "The function is named add and tests expect addition semantics (2+3=5, -1+-1=-2), so replacing subtraction with addition will satisfy all three tests.",
+      "status": "succeeded",
+      "result_detail": "Replaced subtraction with addition in add.py. add(2,3)=5, add(0,0)=0, add(-1,-1)=-2 all hold.",
+      "started_at": "2026-05-07T22:53:39.633732+00:00",
+      "ended_at": "2026-05-07T22:53:44.654230+00:00"
+    }
+  ]
+}

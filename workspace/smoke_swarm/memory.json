@@ -1,0 +1,35 @@
+{
+  "task_id": "swarm-fix-add",
+  "attempts": [
+    {
+      "attempt_id": "att-60672e9a",
+      "agent_id": "dbg-2",
+      "approach": "In add.py line 2, change `return a - b` to `return a + b` so the function performs addition instead of subtraction.",
+      "hypothesis": "Tests expect addition; the operator is wrong (minus instead of plus). Replacing `-` with `+` fixes both failing tests while keeping the zero case correct.",
+      "status": "succeeded",
+      "result_detail": "Changed `return a - b` to `return a + b` in add.py. Now add(2,3)=5, add(0,0)=0, add(-1,-1)=-2 all pass.",
+      "started_at": "2026-05-07T22:59:29.289471+00:00",
+      "ended_at": "2026-05-07T22:59:34.724953+00:00"
+    },
+    {
+      "attempt_id": "att-25a51dbb",
+      "agent_id": "dbg-1",
+      "approach": "In add.py line 2, change `return a - b` to `return a + b` so the function correctly adds rather than subtracts.",
+      "hypothesis": "test_add_positive expects add(2,3)==5 (got -1) and test_add_negative expects add(-1,-1)==-2 (got 0). Both match a subtraction-instead-of-addition bug; replacing the operator fixes both cases and keeps add(0,0)==0.",
+      "status": "succeeded",
+      "result_detail": "Replaced subtraction with addition on line 2 of add.py. add(2,3)=5, add(0,0)=0, add(-1,-1)=-2 all hold.",
+      "started_at": "2026-05-07T22:59:31.213458+00:00",
+      "ended_at": "2026-05-07T22:59:37.322784+00:00"
+    },
+    {
+      "attempt_id": "att-9bc85eda",
+      "agent_id": "dbg-3",
+      "approach": "In add.py line 2, change `return a - b` to `return a + b` so the add function performs addition instead of subtraction.",
+      "hypothesis": "The function uses the wrong operator: subtraction instead of addition. 2-3=-1 and -1-(-1)=0, matching the observed failures.",
+      "status": "succeeded",
+      "result_detail": "Replaced subtraction with addition in add.py line 2. Now add(2,3)=5, add(0,0)=0, add(-1,-1)=-2 — all three tests should pass.",
+      "started_at": "2026-05-07T22:59:40.420263+00:00",
+      "ended_at": "2026-05-07T22:59:47.153959+00:00"
+    }
+  ]
+}

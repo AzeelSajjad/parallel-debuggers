@@ -1,7 +1,9 @@
 """DebuggerAgent: given a workspace with failing tests, attempts a fix.
 
-This increment has no shared memory — the agent fixes from failure output
-alone. Memory and dedup against prior approaches are wired in increment 5.
+Optionally takes a SharedMemory; when provided, the agent gets custom MCP
+tools (read_failed_approaches / propose_approach / record_outcome) so that
+its attempt is logged before it runs and so that prior attempts steer it
+away from already-tried approaches.
 """
 
 from __future__ import annotations
@@ -16,6 +18,9 @@ from claude_agent_sdk import (
     query,
 )
 
+from memory.store import SharedMemory
+from tools.custom_tools import build_memory_tools
+
 
 DEBUGGER_SYSTEM_PROMPT = """You are a debugger agent. The code in the current working directory has failing tests. Your job is to make them pass.
 
@@ -27,6 +32,23 @@ Rules:
 - DO NOT run tests — a separate runner will validate your fix.
 - Make the smallest change that fixes the bug.
 - When done, output a one-line summary of the fix.
+"""
+
+
+DEBUGGER_SYSTEM_PROMPT_WITH_MEMORY = """You are a debugger agent working alongside other debugger agents on the same bug. You share a NEGATIVE MEMORY store: every approach that any debugger has tried (failed or currently in flight) is logged so no two agents waste effort on the same dead end.
+
+REQUIRED workflow — follow it exactly:
+
+1. Call `read_failed_approaches` FIRST. Read every entry carefully.
+2. Devise a fix that is materially different from every entry. If you cannot find a novel angle, call `record_outcome(success=false, detail="no novel approach available")` and stop.
+3. Call `propose_approach(approach="...", hypothesis="...")` BEFORE editing any code. The approach string should name the file/line and the specific change. This RESERVES the approach so concurrent agents won't pick it. You will get back an attempt_id.
+4. Apply the fix using Edit/Write. DO NOT modify test files (`test_*.py` or `*_test.py`).
+5. Output a one-line summary, then call `record_outcome(attempt_id, success=true|false, detail="...")` and stop. If you believe the fix works, pass success=true; if you bailed, success=false.
+
+Other rules:
+- Make the smallest change that fixes the bug.
+- DO NOT run tests — a separate runner will validate.
+- ALWAYS call `record_outcome` before stopping, even on a bail.
 """
 
 
@@ -45,10 +67,12 @@ class DebuggerAgent:
         agent_id: str,
         workspace: Path,
         failure_output: str,
+        memory: SharedMemory | None = None,
     ) -> None:
         self.agent_id = agent_id
         self.workspace = Path(workspace)
         self.failure_output = failure_output
+        self.memory = memory
 
     async def run(self) -> DebuggerResult:
         before = _file_hashes(self.workspace)
@@ -61,13 +85,26 @@ class DebuggerAgent:
             "Diagnose the bug and apply a minimal fix. Do not modify test files."
         )
 
+        allowed_tools = ["Read", "Write", "Edit", "Glob", "Grep"]
+        mcp_servers: dict = {}
+        system_prompt = DEBUGGER_SYSTEM_PROMPT
+
+        if self.memory is not None:
+            server, memory_tool_names, _ = build_memory_tools(
+                self.memory, self.agent_id
+            )
+            mcp_servers["negative_memory"] = server
+            allowed_tools.extend(memory_tool_names)
+            system_prompt = DEBUGGER_SYSTEM_PROMPT_WITH_MEMORY
+
         options = ClaudeAgentOptions(
-            system_prompt=DEBUGGER_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             cwd=str(self.workspace),
-            allowed_tools=["Read", "Write", "Edit", "Glob", "Grep"],
+            allowed_tools=allowed_tools,
             disallowed_tools=["Bash"],
             permission_mode="bypassPermissions",
             max_turns=20,
+            mcp_servers=mcp_servers,
         )
 
         summary = ""
