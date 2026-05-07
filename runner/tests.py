@@ -16,6 +16,8 @@ PYTEST_NO_TESTS_COLLECTED = 5
 
 @dataclass
 class TestResult:
+    __test__ = False  # silence pytest collection warning on the class name
+
     success: bool
     return_code: int
     stdout: str

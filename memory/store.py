@@ -101,3 +101,11 @@ class SharedMemory:
         with self.lock:
             data = self._read()
         return any(a.status == "succeeded" for a in data.attempts)
+
+    def find_latest_attempt_by_agent(self, agent_id: str) -> Attempt | None:
+        with self.lock:
+            data = self._read()
+        for att in reversed(data.attempts):
+            if att.agent_id == agent_id:
+                return att
+        return None
