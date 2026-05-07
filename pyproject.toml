@@ -1,0 +1,17 @@
+[project]
+name = "brain"
+version = "0.1.0"
+description = "Parallel builder + debugger swarm with shared negative memory"
+requires-python = ">=3.11"
+dependencies = [
+    "filelock>=3.13",
+    "pydantic>=2.0",
+    "claude-agent-sdk>=0.1.76",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
