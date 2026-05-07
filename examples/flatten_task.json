@@ -1,0 +1,7 @@
+{
+  "task_id": "flatten-fn",
+  "description": "Write a Python module `flatten.py` containing a function `flatten(items)` that recursively flattens nested lists and tuples into a single flat list. Strings must be treated as atomic values (NOT flattened into characters), even though they are iterable. The test file `test_flatten.py` already exists and is the authoritative spec \u2014 read it first.",
+  "test_files": {
+    "test_flatten.py": "from flatten import flatten\n\n\ndef test_flat_list_unchanged():\n    assert flatten([1, 2, 3]) == [1, 2, 3]\n\n\ndef test_one_level_nesting():\n    assert flatten([1, [2, 3], 4]) == [1, 2, 3, 4]\n\n\ndef test_deeply_nested():\n    assert flatten([1, [2, [3, [4, [5]]]]]) == [1, 2, 3, 4, 5]\n\n\ndef test_strings_are_atomic():\n    \"\"\"Strings are iterable but must NOT be flattened into characters.\"\"\"\n    assert flatten([1, \"ab\", [3, \"cd\"]]) == [1, \"ab\", 3, \"cd\"]\n\n\ndef test_empty_list():\n    assert flatten([]) == []\n\n\ndef test_nested_empties():\n    assert flatten([[], [1], [], [[2]]]) == [1, 2]\n\n\ndef test_tuples_are_flattened():\n    \"\"\"Tuples are treated as nested containers (like lists).\"\"\"\n    assert flatten([1, (2, 3), [4]]) == [1, 2, 3, 4]\n\n\ndef test_mixed_lists_and_tuples():\n    assert flatten([(1, [2]), [3, (4, 5)]]) == [1, 2, 3, 4, 5]\n"
+  }
+}
