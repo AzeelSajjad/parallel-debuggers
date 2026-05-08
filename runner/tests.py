@@ -46,10 +46,12 @@ def run_tests(
     workspace: Path,
     test_path: str = ".",
     timeout: int = 120,
+    python_executable: str | None = None,
 ) -> TestResult:
-    """Run pytest in `workspace`. The python interpreter is the current one
-    (so pytest comes from the orchestrator's venv)."""
-    cmd = [sys.executable, "-m", "pytest", test_path, "-v", "--tb=short"]
+    """Run pytest in `workspace`. Uses `python_executable` if given (lets you
+    point at a target project's venv); otherwise the current interpreter."""
+    interpreter = python_executable or sys.executable
+    cmd = [interpreter, "-m", "pytest", test_path, "-v", "--tb=short"]
     try:
         proc = subprocess.run(
             cmd,
@@ -65,6 +67,13 @@ def run_tests(
             stdout=(e.stdout or "") if isinstance(e.stdout, str) else "",
             stderr=(e.stderr or "") if isinstance(e.stderr, str) else "",
             timed_out=True,
+        )
+    except (FileNotFoundError, OSError) as e:
+        return TestResult(
+            success=False,
+            return_code=-1,
+            stdout="",
+            stderr=f"failed to launch interpreter {interpreter!r}: {e}",
         )
 
     no_tests = proc.returncode == PYTEST_NO_TESTS_COLLECTED

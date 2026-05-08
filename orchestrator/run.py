@@ -64,6 +64,7 @@ async def run_orchestrator(
     num_builders: int = 2,
     num_debuggers: int = 2,
     max_debug_rounds: int = 3,
+    python_executable: str | None = None,
 ) -> OrchestratorResult:
     run_dir = Path(run_dir)
     if run_dir.exists():
@@ -95,7 +96,9 @@ async def run_orchestrator(
     total_cost = sum((r.cost_usd or 0.0) for r in builder_results)
     builder_summaries = [r.summary for r in builder_results]
 
-    builder_tests = [run_tests(ws) for ws in builder_workspaces]
+    builder_tests = [
+        run_tests(ws, python_executable=python_executable) for ws in builder_workspaces
+    ]
     for i, tr in enumerate(builder_tests):
         verdict = "PASS" if tr.success else f"FAIL ({_count_failures(tr)} failed)"
         print(f"[orch] builder-{i + 1}: {verdict}")
@@ -123,7 +126,7 @@ async def run_orchestrator(
     final_test_output = ""
 
     for round_num in range(1, max_debug_rounds + 1):
-        canonical_test = run_tests(canonical)
+        canonical_test = run_tests(canonical, python_executable=python_executable)
         if canonical_test.success:
             break
 
@@ -144,7 +147,7 @@ async def run_orchestrator(
             total_cost += r.cost_usd or 0.0
             round_summaries.append(f"{r.agent_id}: {r.summary[:150]}")
 
-            tr = run_tests(sa.workspace)
+            tr = run_tests(sa.workspace, python_executable=python_executable)
             round_tests.append(tr)
             verdict = "PASS" if tr.success else f"FAIL ({_count_failures(tr)} failed)"
             print(f"[orch] {r.agent_id}: {verdict}")

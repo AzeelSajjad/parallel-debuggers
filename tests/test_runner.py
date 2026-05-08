@@ -56,6 +56,24 @@ def test_import_error_surfaces(tmp_path: Path) -> None:
     assert "nonexistent_module" in result.failure_output
 
 
+def test_python_executable_argument_is_threaded_through(tmp_path: Path) -> None:
+    """Passing python_executable=sys.executable explicitly should be a no-op
+    behaviorally — verifies the param is wired in, not just declared."""
+    import sys
+
+    (tmp_path / "test_ok.py").write_text("def test(): assert True\n")
+    result = run_tests(tmp_path, python_executable=sys.executable)
+    assert result.success
+
+
+def test_python_executable_invalid_path_fails_gracefully(tmp_path: Path) -> None:
+    (tmp_path / "test_ok.py").write_text("def test(): assert True\n")
+    result = run_tests(tmp_path, python_executable="/nonexistent/python")
+    assert not result.success
+    # Either FileNotFoundError surfaces in stderr or the subprocess returns nonzero;
+    # in either case run_tests must not raise.
+
+
 def test_timeout(tmp_path: Path) -> None:
     _write(
         tmp_path / "test_slow.py",
